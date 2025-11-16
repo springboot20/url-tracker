@@ -75,20 +75,14 @@ const getTrackedUrl = async (req, res) => {
 
   // Optional improvement:
   // Serve rendered EJS page prompting HTML5 geolocation
-  return res
-    .status(200)
-    .json({
-      message: 'GPS Recorded',
-      tracker,
-    })
-    .render('geolocation-prompt', {
-      trackingId: tracker.trackingId,
-      targetUrl: tracker.targetURL,
-      ogUrl: `${req.protocol}://${req.get('host')}/t/${trackingId}`,
-      ogTitle: ogData.title || 'Anonymous Message',
-      ogDescription: ogData.description || 'Read my anonymous notes safely.',
-      ogImage: ogData.image,
-    });
+  return res.render('geolocation-prompt', {
+    trackingId: tracker.trackingId,
+    targetUrl: tracker.targetURL,
+    ogUrl: `${req.protocol}://${req.get('host')}/t/${trackingId}`,
+    ogTitle: ogData.title || 'Anonymous Message',
+    ogDescription: ogData.description || 'Read my anonymous notes safely.',
+    ogImage: ogData.image,
+  });
 };
 
 const getVisitLogsDetails = async (req, res) => {
