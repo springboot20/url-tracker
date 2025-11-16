@@ -27,11 +27,11 @@
             });
 
             console.log(await response.json());
-            window.location.href = '<%= targetUrl %>';
 
             setTimeout(() => {
               document.getElementById('status').innerText =
                 'Location shared successfully! Redirecting...';
+              window.location.href = '<%= targetUrl %>';
             }, 500);
           },
           (error) => {
