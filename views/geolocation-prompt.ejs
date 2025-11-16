@@ -33,10 +33,7 @@
 
             console.log(await response.json());
 
-            setTimeout(() => {
-              document.getElementById('status').innerText =
-                'Location shared successfully! Redirecting...';
-            }, 500);
+    
             window.location.href = '<%= targetUrl %>';
           },
           (error) => {
