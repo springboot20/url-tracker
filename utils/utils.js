@@ -1,3 +1,6 @@
+// const fetch = require('node-fetch');
+const cheerio = require('cheerio');
+
 function getClientIp(req) {
   let ip =
     req.headers['x-forwarded-for'] ||
@@ -18,4 +21,27 @@ function getClientIp(req) {
   return ip;
 }
 
-module.exports = { getClientIp };
+async function scrapeNGLProfile(url) {
+  if (!url) return;
+
+  try {
+    const response = await fetch(url);
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    const ogTags = {};
+    $('meta[property^="og:"]').each((i, element) => {
+      const property = $(element).attr('property');
+      const content = $(element).attr('content');
+      if (property && content) {
+        const key = property.replace('og:', '');
+        ogTags[key] = content;
+      }
+    });
+
+    return ogTags;
+  } catch (error) {
+    console.error('Error fetching or parsing URL:', error);
+  }
+}
+module.exports = { getClientIp, scrapeNGLProfile };

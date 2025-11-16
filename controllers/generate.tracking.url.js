@@ -1,5 +1,5 @@
 const { v4: uuid4 } = require('uuid');
-const { getClientIp } = require('../utils/utils.js');
+const { getClientIp, scrapeNGLProfile } = require('../utils/utils.js');
 const { IPinfoWrapper } = require('node-ipinfo');
 const { TrackerModel: URLTracker } = require('../models/tracker.model.js');
 const { VisitLogModel } = require('../models/visitor.model.js');
@@ -16,6 +16,8 @@ const generateTrackingUrl = async (req, res) => {
   }
 
   const urlTrackingId = uuid4().split('-')[0];
+
+  const ogTags = await scrapeNGLProfile(originalUrl);
 
   const tracker = new URLTracker({
     targetURL: originalUrl,
@@ -75,7 +77,14 @@ const getTrackedUrl = async (req, res) => {
 
   // Optional improvement:
   // Serve rendered EJS page prompting HTML5 geolocation
-  return res.render('geolocation-prompt', { trackingId, targetUrl: tracker.targetURL });
+  return res.render('embed-preview', {
+    trackingId: tracker.trackingId,
+    targetUrl: tracker.targetURL,
+    ogUrl: `${req.protocol}://${req.get('host')}/t/${trackingId}`,
+    ogTitle: ogData.title || 'Anonymous Message',
+    ogDescription: ogData.description || 'Read my anonymous notes safely.',
+    ogImage: ogData.image,
+  });
 };
 
 module.exports = { generateTrackingUrl, getTrackedUrl, getRealGeoLocation };

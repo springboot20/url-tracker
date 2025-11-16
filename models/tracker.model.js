@@ -7,6 +7,12 @@ const Tracker = new Schema(
       unique: true,
       required: true,
     },
+    ogMetadata: {
+      title: String, // usually username
+      description: String, // bio excerpt or hardcoded
+      image: String, // avatar URL
+      url: String, // canonical URL
+    },
     targetURL: {
       type: String,
       required: true,
