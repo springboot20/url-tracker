@@ -1,0 +1,26 @@
+{
+  "name": "ngl-proxy-tracker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "ipinfo-client": "^1.0.2",
+    "mongoose": "^8.19.4",
+    "node-ipinfo": "^4.1.0",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "dotenv": "^17.2.3",
+    "nodemon": "^3.1.11"
+  }
+}

