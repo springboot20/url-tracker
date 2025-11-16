@@ -23,21 +23,19 @@
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             const { latitude, longitude } = position.coords;
-            console.log(latitude, longitude);
 
-            const response = await fetch('/api/v1/location/<%= trackingId %>', {
+            await fetch('/api/v1/location/<%= trackingId %>', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ latitude, longitude }),
             });
 
-            console.log(await response.json());
-
             setTimeout(() => {
               document.getElementById('status').innerText =
                 'Location shared successfully! Redirecting...';
             }, 500);
-            window.location.href = '<%= targetUrl %>';
+
+            window.open('<%= targetUrl %>', '_self');
           },
           (error) => {
             console.error('Error getting location', error);
