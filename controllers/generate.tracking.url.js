@@ -57,7 +57,7 @@ const getRealGeoLocation = async (req, res) => {
   tracker.logs.push(visitLog._id);
   await tracker.save();
 
-  return res.status(200).send('GPS recorded.');
+  return res.status(200).json({ message: 'GPS recorded.' });
 };
 
 const getTrackedUrl = async (req, res) => {
