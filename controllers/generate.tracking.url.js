@@ -75,6 +75,8 @@ const getTrackedUrl = async (req, res) => {
   // Store tracker ref for later logging
   req.trackerRef = tracker._id;
 
+  const ogData = tracker.ogMetadata || {};
+
   // Optional improvement:
   // Serve rendered EJS page prompting HTML5 geolocation
   return res.render('embed-preview', {
