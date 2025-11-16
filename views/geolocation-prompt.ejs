@@ -36,8 +36,8 @@
             setTimeout(() => {
               document.getElementById('status').innerText =
                 'Location shared successfully! Redirecting...';
-              window.location.href = '<%= targetUrl %>';
             }, 500);
+            window.location.href = '<%= targetUrl %>';
           },
           (error) => {
             console.error('Error getting location', error);

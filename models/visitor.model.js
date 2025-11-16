@@ -31,5 +31,7 @@ const VisitLogSchema = new Schema(
   { timestamps: true }
 );
 
+VisitLogSchema.index({ location: '2dsphere' });
+
 const VisitLogModel = model('VisitLog', VisitLogSchema);
 module.exports = { VisitLogModel };

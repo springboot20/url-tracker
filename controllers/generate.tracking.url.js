@@ -36,9 +36,6 @@ const getRealGeoLocation = async (req, res) => {
   const { trackingId } = req.params;
   const { latitude, longitude } = req.body;
 
-  console.log(latitude, longitude);
-  console.log(trackingId);
-
   const tracker = await URLTracker.findOne({ trackingId });
   if (!tracker) return res.status(404).json({ error: 'Tracking ID not found.' });
 
@@ -53,8 +50,6 @@ const getRealGeoLocation = async (req, res) => {
       coordinates: [longitude, latitude], // GeoJSON [lon, lat]
     },
   });
-
-  console.log(visitLog);
 
   await visitLog.save();
   tracker.logs.push(visitLog._id);
@@ -90,4 +85,19 @@ const getTrackedUrl = async (req, res) => {
   });
 };
 
-module.exports = { generateTrackingUrl, getTrackedUrl, getRealGeoLocation };
+const getVisitLogsDetails = async (req, res) => {
+  const { trackingId } = req.params;
+
+  const visitLogsDetails = await VisitLogModel.find({ trackerId: trackingId });
+
+  if (!visitLogsDetails) {
+    return res.status(404).json({ message: 'Tracking logs link not found' });
+  }
+
+  return res.status(200).json({
+    message: 'fetched visit logs',
+    trackingLog: visitLogsDetails,
+  });
+};
+
+module.exports = { generateTrackingUrl, getTrackedUrl, getRealGeoLocation, getVisitLogsDetails };
