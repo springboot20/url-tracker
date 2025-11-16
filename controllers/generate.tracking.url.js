@@ -22,6 +22,7 @@ const generateTrackingUrl = async (req, res) => {
   const tracker = new URLTracker({
     targetURL: originalUrl,
     trackingId: urlTrackingId,
+    ogMetadata: ogTags,
   });
 
   await tracker.save();
