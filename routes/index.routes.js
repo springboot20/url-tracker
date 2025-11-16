@@ -8,7 +8,7 @@ const {
 const router = express.Router();
 
 router.route('/generate-tracking-url').post(generateTrackingUrl);
-router.route('/target/:trackingId').get(getTrackedUrl);
+router.route('/t/:trackingId').get(getTrackedUrl);
 router.route('/location/:trackingId').post(getRealGeoLocation);
 
 module.exports = router;

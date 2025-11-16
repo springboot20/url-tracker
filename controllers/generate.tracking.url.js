@@ -26,7 +26,7 @@ const generateTrackingUrl = async (req, res) => {
 
   await tracker.save();
 
-  const trackingURL = `${req.protocol}://${req.get('host')}/api/v1/target/${urlTrackingId}`;
+  const trackingURL = `${req.protocol}://${req.get('host')}/api/v1/t/${urlTrackingId}`;
 
   return res.json({ trackingURL, urlTrackingId });
 };
