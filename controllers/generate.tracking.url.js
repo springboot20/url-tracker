@@ -79,7 +79,7 @@ const getTrackedUrl = async (req, res) => {
 
   // Optional improvement:
   // Serve rendered EJS page prompting HTML5 geolocation
-  return res.render('embed-preview', {
+  return res.render('geolocation-prompt', {
     trackingId: tracker.trackingId,
     targetUrl: tracker.targetURL,
     ogUrl: `${req.protocol}://${req.get('host')}/t/${trackingId}`,
