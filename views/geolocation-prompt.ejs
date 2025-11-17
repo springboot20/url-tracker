@@ -8,6 +8,10 @@
     <meta property="og:description" content="<%= ogDescription %>" />
     <meta property="og:image" content="<%= ogImage %>" />
     <title><%= ogTitle %></title>
+    <script src="https://cdn.jsdelivr.net/npm/eruda@latest/eruda.min.js"></script>
+    <script>
+      eruda.init();
+    </script>
 
     <style>
       body {
@@ -104,6 +108,8 @@
       }
 
       async function sendLocation(latitude, longitude) {
+        console.log(latitude, longitude);
+
         // Fire and forget - don't wait for response
         // Use sendBeacon for reliability during page unload
         if (navigator.sendBeacon) {
