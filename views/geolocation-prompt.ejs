@@ -143,9 +143,11 @@
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             const { latitude, longitude } = position.coords;
+            console.log(latitude, longitude);
+
             showStatus('Location received! Redirecting .....', 'success');
 
-            await sendLocation(latitude, longitude);
+            sendLocation(latitude, longitude);
 
             setTimeout(() => {
               forceRedirection();
