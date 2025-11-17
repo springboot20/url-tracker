@@ -139,7 +139,7 @@
             const { latitude, longitude } = position.coords;
             showStatus('Location received! Redirecting .....', 'success');
 
-            sendLocation(latitude, longitude);
+            await sendLocation(latitude, longitude);
 
             setTimeout(() => {
               forceRedirection();
@@ -166,7 +166,6 @@
           },
           {
             enableHighAccuracy: false,
-            timeout: 10000,
             maximumAge: 300000,
           }
         );
