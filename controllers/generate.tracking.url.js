@@ -101,7 +101,7 @@ const getVisitLogsDetails = async (req, res) => {
 };
 
 const getAllTrackers = async (req, res) => {
-  const trackers = await URLTracker.find();
+  const trackers = await URLTracker.find().populate('logs');
 
   return res.status(200).json({
     message: 'trackers fetched',
