@@ -180,7 +180,8 @@
           showStatus(errorMsg + ' Redirecting anyway...', 'error');
 
           // Still redirect even if location fails
-          setTimeout(forceRedirect, 1500);
+          // setTimeout(forceRedirection, 1500);
+          locationButton.disabled = false
         }
 
         setTimeout(() => {
