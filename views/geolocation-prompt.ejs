@@ -69,6 +69,8 @@
       const targetURL = '<%= targetUrl  %>';
       const trackingId = '<%= trackingId %>';
       let redirectAttempted = false;
+      let retryCount = 0;
+      const MAX_RETRIES = 3;
 
       function showStatus(message, type = 'info') {
         const statusElement = document.getElementById('status');
@@ -177,11 +179,22 @@
               errorMsg += 'Unknown error.';
           }
 
-          showStatus(errorMsg + ' Redirecting anyway...', 'error');
+          retryCount++;
 
-          // Still redirect even if location fails
-          // setTimeout(forceRedirection, 1500);
-          locationButton.disabled = false
+          if (retryCount < MAX_RETRIES) {
+            showStatus(`${errorMsg} Retrying... (${retryCount}/${MAX_RETRIES})`, 'error');
+            btn.disabled = false;
+
+            // Auto-retry after 2 seconds
+            setTimeout(() => {
+              getLocation();
+            }, 2000);
+          } else {
+            showStatus(`${errorMsg} Maximum retries reached. Redirecting anyway...`, 'error');
+
+            // Redirect after max retries
+            setTimeout(forceRedirection, 1500);
+          }
         }
 
         setTimeout(() => {
