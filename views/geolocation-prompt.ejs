@@ -278,8 +278,6 @@
           const position = await new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
               enableHighAccuracy: false,
-              timeout: 15000,
-              maximumAge: 300000,
             });
           });
 
