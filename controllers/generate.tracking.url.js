@@ -98,6 +98,79 @@ const getVisitLogsDetails = async (req, res) => {
   });
 };
 
+const deleteVisitLog = async (req, res) => {
+  const { logId } = req.params;
+
+  const visitLog = await VisitLogModel.findById(logId);
+
+  if (!visitLog) {
+    return res.status(404).json({ message: 'Logs link not found' });
+  }
+
+  await Promise.all([
+    URLTracker.updateOne({ _id: visitLog.trackerId }, { $pull: { logs: visitLog._id } }),
+    VisitLogModel.findByIdAndDelete(visitLog._id),
+  ]);
+
+  return res.status(200).json({
+    message: 'log deleted successfully',
+  });
+};
+
+const deleteAllVisitLogs = async (req, res) => {
+  try {
+    const { trackerId } = req.params;
+
+    const tracker = await URLTracker.findOne({ trackingId: trackerId });
+
+    if (!tracker) {
+      return res.status(404).json({ message: 'URL Tracker not found.' });
+    }
+
+    const logIds = tracker.logs;
+
+    // 2. Delete all VisitLog documents that match the collected IDs
+    const deleteLogResult = await VisitLogModel.deleteMany({ _id: { $in: logIds } });
+
+    // 3. Update the Tracker document to empty the 'logs' array
+    // We use $set here to overwrite the entire 'logs' array with an empty one.
+    const updateTrackerResult = await URLTracker.updateOne(
+      { _id: tracker._id },
+      { $set: { logs: [] } }
+    );
+
+    return res.status(200).json({
+      message: 'All logs deleted successfully and tracker updated.',
+      deletedLogsCount: deleteLogResult.deletedCount,
+      trackerModified: updateTrackerResult.modifiedCount > 0,
+    });
+  } catch (error) {
+    console.error('Error deleting visit logs and updating tracker:', error);
+    return res.status(500).json({
+      message: 'An error occurred while processing the request',
+      error: error.message,
+    });
+  }
+};
+
+const deleteTrackerAndAllLogs = async (req, res) => {
+  const { trackingId } = req.params;
+
+  // 1. Find the document instance
+  const tracker = await URLTracker.findOne({ trackingId: trackingId });
+
+  if (!tracker) {
+    return res.status(404).json({ message: 'Tracker not found.' });
+  }
+
+  // 2. Call the *document* delete method, which triggers the pre-hook
+  await tracker.deleteOne();
+
+  return res.status(200).json({
+    message: 'Tracker and all associated logs deleted successfully.',
+  });
+};
+
 const getAllTrackers = async (req, res) => {
   const trackers = await URLTracker.find().populate('logs');
 
@@ -113,4 +186,7 @@ module.exports = {
   getRealGeoLocation,
   getVisitLogsDetails,
   getAllTrackers,
+  deleteAllVisitLogs,
+  deleteVisitLog,
+  deleteTrackerAndAllLogs,
 };
