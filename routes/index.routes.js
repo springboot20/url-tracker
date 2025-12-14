@@ -8,7 +8,6 @@ const {
   deleteAllVisitLogs,
   deleteVisitLog,
   deleteTrackerAndAllLogs,
-  trackWithIPGeolocation,
 } = require('../controllers/generate.tracking.url');
 
 const router = express.Router();
@@ -19,6 +18,5 @@ router.route('/t/:trackingId').get(getTrackedUrl).delete(deleteTrackerAndAllLogs
 router.route('/t/logs/:trackingId').get(getVisitLogsDetails).delete(deleteAllVisitLogs);
 router.route('/t/log/:logId').delete(deleteVisitLog);
 router.route('/location/:trackingId').post(getRealGeoLocation);
-router.route('/track-ip/:trackingId').get(trackWithIPGeolocation);
 
 module.exports = router;

