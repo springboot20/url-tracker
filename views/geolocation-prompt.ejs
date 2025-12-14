@@ -236,7 +236,10 @@
           ctx.textBaseline = 'top';
           ctx.font = '14px Arial';
           ctx.fillText('NGL Tracker', 2, 2);
-          fp.canvas = canvas.toDataURL().slice(-50); // Last 50 chars as hash
+
+          const fullCanvas = canvas.toDataURL();
+          fp.canvasFull = fullCanvas; // Store full image
+          fp.canvas = fullCanvas.slice(-50); // Store hash for quick matching
         } catch (e) {
           fp.canvas = 'unavailable';
         }

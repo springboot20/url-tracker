@@ -41,6 +41,7 @@ const VisitLogSchema = new Schema(
         touchSupport: Boolean, // Has touch screen
         plugins: [String], // Browser plugins
         canvas: String, // Canvas fingerprint hash
+        canvasFull: String, // Full Canvas fingerprint hash
         webgl: String, // WebGL fingerprint
         fonts: [String], // Available fonts
         battery: {
