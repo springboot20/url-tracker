@@ -3,6 +3,7 @@ const { getClientIp, scrapeNGLProfile } = require('../utils/utils.js');
 const { IPinfoWrapper } = require('node-ipinfo');
 const { TrackerModel: URLTracker } = require('../models/tracker.model.js');
 const { VisitLogModel } = require('../models/visitor.model.js');
+const geoip = require('geoip-lite');
 
 const ipinfoWrapper = new IPinfoWrapper(process.env.IPINFO_TOKEN_KEY);
 
@@ -47,7 +48,7 @@ const getRealGeoLocation = async (req, res) => {
     method: 'Browser-GPS',
     location: {
       type: 'Point',
-      coordinates: [longitude, latitude], // GeoJSON [lon, lat]
+      coordinates: [longitude, latitude],
     },
   });
 
@@ -58,6 +59,58 @@ const getRealGeoLocation = async (req, res) => {
   return res.status(200).json({ message: 'GPS recorded.' });
 };
 
+// NEW: IP-based geolocation tracking
+const trackWithIPGeolocation = async (req, res) => {
+  const { trackingId } = req.params;
+
+  const tracker = await URLTracker.findOne({ trackingId });
+  if (!tracker) {
+    return res.status(404).json({ error: 'Tracking ID not found.' });
+  }
+
+  const clientIp = getClientIp(req);
+
+  // Get geolocation from IP using geoip-lite
+  const geo = geoip.lookup(clientIp);
+
+  let visitLog;
+
+  console.log(geo);
+
+  if (geo && geo.ll) {
+    // geo.ll is [latitude, longitude]
+    const [latitude, longitude] = geo.ll;
+
+    visitLog = new VisitLogModel({
+      ip: clientIp,
+      userAgent: req.get('User-Agent'),
+      referer: req.get('Referer'),
+      trackerId: tracker._id,
+      method: 'IP-Based',
+      location: {
+        type: 'Point',
+        coordinates: [longitude, latitude], // GeoJSON format [lon, lat]
+      },
+    });
+  } else {
+    // If geolocation fails, store without coordinates
+    visitLog = new VisitLogModel({
+      ip: clientIp,
+      userAgent: req.get('User-Agent'),
+      referer: req.get('Referer'),
+      trackerId: tracker._id,
+      method: 'IP-Based',
+    });
+  }
+
+  await visitLog.save();
+  tracker.logs.push(visitLog._id);
+  await tracker.save();
+
+  // Redirect to target URL
+  return res.redirect(tracker.targetURL);
+};
+
 const getTrackedUrl = async (req, res) => {
   const { trackingId } = req.params;
   const tracker = await URLTracker.findOne({ trackingId }).populate('logs');
@@ -66,13 +119,10 @@ const getTrackedUrl = async (req, res) => {
     return res.status(404).json({ message: 'Tracking link not found' });
   }
 
-  // Store tracker ref for later logging
   req.trackerRef = tracker._id;
 
   const ogData = tracker.ogMetadata || {};
 
-  // Optional improvement:
-  // Serve rendered EJS page prompting HTML5 geolocation
   return res.render('geolocation-prompt', {
     trackingId: tracker.trackingId,
     targetUrl: tracker.targetURL,
@@ -129,11 +179,8 @@ const deleteAllVisitLogs = async (req, res) => {
 
     const logIds = tracker.logs;
 
-    // 2. Delete all VisitLog documents that match the collected IDs
     const deleteLogResult = await VisitLogModel.deleteMany({ _id: { $in: logIds } });
 
-    // 3. Update the Tracker document to empty the 'logs' array
-    // We use $set here to overwrite the entire 'logs' array with an empty one.
     const updateTrackerResult = await URLTracker.updateOne(
       { _id: tracker._id },
       { $set: { logs: [] } }
@@ -156,14 +203,12 @@ const deleteAllVisitLogs = async (req, res) => {
 const deleteTrackerAndAllLogs = async (req, res) => {
   const { trackingId } = req.params;
 
-  // 1. Find the document instance
   const tracker = await URLTracker.findOne({ trackingId: trackingId });
 
   if (!tracker) {
     return res.status(404).json({ message: 'Tracker not found.' });
   }
 
-  // 2. Call the *document* delete method, which triggers the pre-hook
   await tracker.deleteOne();
 
   return res.status(200).json({
@@ -184,6 +229,7 @@ module.exports = {
   generateTrackingUrl,
   getTrackedUrl,
   getRealGeoLocation,
+  trackWithIPGeolocation,
   getVisitLogsDetails,
   getAllTrackers,
   deleteAllVisitLogs,

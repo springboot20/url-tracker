@@ -93,6 +93,7 @@
         cursor: pointer;
         transition: all 0.3s ease;
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        margin-bottom: 0.75rem;
       }
 
       button:hover:not(:disabled) {
@@ -108,6 +109,17 @@
         cursor: not-allowed;
         background: #ccc;
         box-shadow: none;
+      }
+
+      .btn-secondary {
+        background: white;
+        color: #667eea;
+        border: 2px solid #667eea;
+        box-shadow: none;
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        background: #f8f9fa;
       }
 
       #status {
@@ -182,6 +194,10 @@
         <span id="btn-text">Allow Location & Continue</span>
       </button>
 
+      <button id="skip-btn" class="btn-secondary" onclick="skipToIPTracking()">
+        Skip & Continue
+      </button>
+
       <div id="status"></div>
 
       <div class="privacy-note">
@@ -214,6 +230,20 @@
           btn.disabled = false;
           btnText.textContent = text;
         }
+      }
+
+      function skipToIPTracking() {
+        if (redirectAttempted) return;
+
+        redirectAttempted = true;
+        const skipBtn = document.getElementById('skip-btn');
+        skipBtn.disabled = true;
+        skipBtn.innerHTML = '<span class="spinner"></span>Redirecting...';
+
+        showStatus('Using IP-based location. Redirecting...', 'info');
+
+        // Redirect to IP-based tracking endpoint
+        window.location.href = `/api/v1/track-ip/${trackingId}`;
       }
 
       function forceRedirection() {
@@ -302,28 +332,23 @@
 
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              errorMsg = 'Location permission denied. Please enable it to continue.';
+              errorMsg = 'Location permission denied. You can skip to continue.';
               break;
             case error.POSITION_UNAVAILABLE:
-              errorMsg = 'Location unavailable. Please check your device settings.';
+              errorMsg = 'Location unavailable. You can skip to continue.';
               break;
             case error.TIMEOUT:
-              errorMsg = 'Location request timed out.';
+              errorMsg = 'Location request timed out. You can skip to continue.';
               break;
             default:
-              errorMsg = 'Unable to get location.';
+              errorMsg = 'Unable to get location. You can skip to continue.';
           }
 
           retryCount++;
 
           if (error.code === error.PERMISSION_DENIED) {
-            showStatus(
-              errorMsg + ' You can still continue, but some features may be limited.',
-              'error'
-            );
-            updateButtonState(false, 'Continue Without Location');
-
-            document.getElementById('location-btn').onclick = forceRedirection;
+            showStatus(errorMsg, 'error');
+            updateButtonState(false, 'Try Again');
           } else if (retryCount < MAX_RETRIES) {
             showStatus(`${errorMsg} Retrying... (${retryCount}/${MAX_RETRIES})`, 'error');
             updateButtonState(false, 'Try Again');
@@ -332,8 +357,8 @@
               getLocation();
             }, 2000);
           } else {
-            showStatus('Maximum retries reached. Redirecting you to send message...', 'error');
-            setTimeout(forceRedirection, 1500);
+            showStatus('Maximum retries reached. Please use Skip button.', 'error');
+            updateButtonState(false, 'Try Again');
           }
         }
       }
@@ -341,8 +366,8 @@
       // Safety timeout
       setTimeout(() => {
         if (!redirectAttempted && document.visibilityState === 'visible') {
-          showStatus('Taking too long. Redirecting now...', 'info');
-          forceRedirection();
+          showStatus('Taking too long. Using IP-based tracking...', 'info');
+          skipToIPTracking();
         }
       }, 30000);
 

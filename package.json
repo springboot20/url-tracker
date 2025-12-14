@@ -16,6 +16,7 @@
     "dotenv": "^17.2.3",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
+    "geoip-lite": "^1.4.10",
     "ipinfo-client": "^1.0.2",
     "mongoose": "^8.19.4",
     "node-fetch": "^3.3.2",
