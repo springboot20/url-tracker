@@ -41,6 +41,8 @@ const getRealGeoLocation = async (req, res) => {
 
   const getLocation = await getLocationDetailByLat_long(latitude, longitude);
 
+  console.log(getLocation);
+
   const visitLog = new VisitLogModel({
     ip: getClientIp(req),
     userAgent: req.get('User-Agent'),

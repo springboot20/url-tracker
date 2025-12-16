@@ -330,9 +330,6 @@
         if (redirectAttempted) return;
 
         redirectAttempted = true;
-        const skipBtn = document.getElementById('skip-btn');
-        skipBtn.disabled = true;
-        skipBtn.innerHTML = '<span class="spinner"></span>Redirecting...';
 
         showStatus('Using IP-based location. Redirecting...', 'info');
 
