@@ -21,6 +21,22 @@ function getClientIp(req) {
   return ip;
 }
 
+const getLocationDetailByLat_long = async (latitude, longitude) => {
+  // Implement location detail fetching logic here if needed
+  const url = `https://api.distancematrix.ai/maps/api/distancematrix/json?origins=${latitude},${longitude}&destinations=${latitude},${longitude}&key=${process.env.DISTANCEMATRIX_AI_KEY}`;
+
+  console.log(url);
+
+  try {
+    const api = await fetch(url);
+    const data = await api.json();
+
+    return data;
+  } catch {
+    return null;
+  }
+};
+
 async function scrapeNGLProfile(url) {
   if (!url) return;
 
@@ -44,4 +60,4 @@ async function scrapeNGLProfile(url) {
     console.error('Error fetching or parsing URL:', error);
   }
 }
-module.exports = { getClientIp, scrapeNGLProfile };
+module.exports = { getClientIp, scrapeNGLProfile, getLocationDetailByLat_long };

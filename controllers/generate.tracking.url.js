@@ -1,5 +1,5 @@
 const { v4: uuid4 } = require('uuid');
-const { getClientIp, scrapeNGLProfile } = require('../utils/utils.js');
+const { getClientIp, scrapeNGLProfile, getLocationDetailByLat_long } = require('../utils/utils.js');
 const { IPinfoWrapper } = require('node-ipinfo');
 const { TrackerModel: URLTracker } = require('../models/tracker.model.js');
 const { VisitLogModel } = require('../models/visitor.model.js');
@@ -39,6 +39,8 @@ const getRealGeoLocation = async (req, res) => {
   const tracker = await URLTracker.findOne({ trackingId });
   if (!tracker) return res.status(404).json({ error: 'Tracking ID not found.' });
 
+  const getLocation = await getLocationDetailByLat_long(latitude, longitude);
+
   const visitLog = new VisitLogModel({
     ip: getClientIp(req),
     userAgent: req.get('User-Agent'),
@@ -50,6 +52,9 @@ const getRealGeoLocation = async (req, res) => {
       coordinates: [longitude, latitude], // GeoJSON [lon, lat]
     },
     deviceFingerprint: deviceFingerprint || {},
+    destination_addresses: getLocation ? getLocation.destination_addresses : [],
+    origin_addresses: getLocation ? getLocation.origin_addresses : [],
+    rows: getLocation ? getLocation.rows : [],
   });
 
   await visitLog.save();

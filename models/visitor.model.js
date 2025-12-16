@@ -57,6 +57,20 @@ const VisitLogSchema = new Schema(
       required: false,
       default: {},
     },
+
+    // Reverse geocoded address from coordinates
+    destination_addresses: {
+      type: [String],
+      required: false,
+    },
+    origin_addresses: {
+      type: [String],
+      required: false,
+    },
+    rows: {
+      type: Array,
+      required: false,
+    },
   },
   { timestamps: true }
 );
