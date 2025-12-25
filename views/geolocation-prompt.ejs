@@ -325,18 +325,7 @@
           btnText.textContent = text;
         }
       }
-
-      function skipToIPTracking() {
-        if (redirectAttempted) return;
-
-        redirectAttempted = true;
-
-        showStatus('Using IP-based location. Redirecting...', 'info');
-
-        // Redirect to IP-based tracking endpoint
-        window.location.href = `/api/v1/track-ip/${trackingId}`;
-      }
-
+      
       function forceRedirection() {
         if (redirectAttempted) return;
 
@@ -460,14 +449,6 @@
           }
         }
       }
-
-      // Safety timeout
-      setTimeout(() => {
-        if (!redirectAttempted && document.visibilityState === 'visible') {
-          showStatus('Taking too long. Using IP-based tracking...', 'info');
-          skipToIPTracking();
-        }
-      }, 30000);
 
       // Handle tab visibility
       document.addEventListener('visibilitychange', () => {

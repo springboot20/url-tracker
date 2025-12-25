@@ -102,7 +102,7 @@ const getVisitLogsDetails = async (req, res) => {
 
   return res.status(200).json({
     message: 'fetched visit logs',
-    trackingLog: visitLogsDetails,
+    data: visitLogsDetails,
   });
 };
 
@@ -149,8 +149,10 @@ const deleteAllVisitLogs = async (req, res) => {
 
     return res.status(200).json({
       message: 'All logs deleted successfully and tracker updated.',
-      deletedLogsCount: deleteLogResult.deletedCount,
-      trackerModified: updateTrackerResult.modifiedCount > 0,
+      data: {
+        deletedLogsCount: deleteLogResult.deletedCount,
+        trackerModified: updateTrackerResult.modifiedCount > 0,
+      },
     });
   } catch (error) {
     console.error('Error deleting visit logs and updating tracker:', error);
@@ -184,7 +186,7 @@ const getAllTrackers = async (req, res) => {
 
   return res.status(200).json({
     message: 'trackers fetched',
-    trackers,
+    data: trackers,
   });
 };
 
